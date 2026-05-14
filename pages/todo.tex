@@ -1,39 +1,26 @@
-% BehaVoir — TODO & Experiment Tracker
-% Mark items with \done when completed
-%
-% Usage:
-%   \pending{Task description}
-%   \done{Task description}
-%   \experiment{Experiment description}{Status: planned | running | done | abandoned}
+% BehaVoir — Todo Tracker
+% Use \pending{} for open items, \done{} for completed
+% Use \experiment{name}{status} for experiment tracking
 
-\newcommand{\pending}[1]{\item[$\square$] #1}
-\newcommand{\done}[1]{\item[$\boxtimes$] #1}
-\newcommand{\experiment}[2]{\item \textbf{#1} \hfill \textit{#2}}
+\section*{Todo}
 
-% ============================================================
-%  WRITING TASKS
-% ============================================================
-\begin{itemize}
-  \pending{Define paper scope and core thesis}
-  \pending{Write Introduction}
-  \pending{Literature review / Related Work}
-  \pending{Methodology section}
-  \pending{Experiments section}
-  \pending{Results and Discussion}
-  \pending{Conclusion}
-\end{itemize}
+\subsection*{Framing \& Scope}
+\done{Clarify field name --- use \textbf{Computational Social Science} as primary; ``AI for Social Science'' as secondary for ML audience. See scratch.tex for full rationale.}
+\done{Compile list of domains where Reddit is used in AI/Social Science --- 12 Reddit + 3 non-Reddit datasets cataloged in scratch.tex with papers, sizes, and why each is ``clean''}
 
-% ============================================================
-%  EXPERIMENTS
-% ============================================================
-\begin{itemize}
-  % \experiment{Experiment name}{planned}
-\end{itemize}
+\subsection*{Writing}
+\pending{Write Introduction — frame the AlphaGo $\to$ AlphaZero $\to$ MuZero analogy}
+\pending{Related Work — observational studies, automated science, dataset curation}
+\pending{Methodology section outline}
 
-% ============================================================
-%  MISCELLANEOUS
-% ============================================================
-\begin{itemize}
-  \pending{Set up bibliography}
-  \pending{Add figures directory}
-\end{itemize}
+\subsection*{Literature \& References}
+\done{Survey behavior simulation with LLMs --- 7 key papers added to references.bib and scratch.tex (Park, Horton, Manning, Aher, Argyle, Santurkar, Hewitt). Hewitt et al.\ still needs stable DOI.}
+\done{Cite Lasswell's communication model (1948) and position our mapping --- added \texttt{lasswell1948structure}, \texttt{buntain2014identifying} to references.bib}
+
+\subsection*{Methodology \& Theory}
+\pending{Define pre-registration protocol: formulate hypotheses on data up to time $T$, freeze, test on data after $T$. Specify precisely --- cannot just assert ``Reddit is a time series.''}
+\pending{Solve the epistemic rigor bottleneck: how did humans solve biases in observational datasets (CMV, etc.)? What makes these structures special? How to maximize real-world experiment validity --- method discovers dataset, poses biases/constraints, fixes end-to-end, so field experiments hold.}
+\pending{Operationalize ``superhuman performance'' --- define metrics for comparison with human experts.}
+
+\subsection*{Experiments}
+% \experiment{name}{status}

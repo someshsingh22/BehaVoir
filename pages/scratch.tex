@@ -14,15 +14,661 @@
 %  IDEAS
 \section{Ideas}
 
+\idea{Reddit as primary data source}{Why Reddit? (1)~Data availability --- public API, Pushshift archives make large-scale collection feasible. (2)~Rich structure --- subreddits act as natural ``environments,'' plus threaded conversations, voting signals, user histories, and timestamps. (3)~Massive scale --- billions of posts/comments spanning years of organic human behavior. (4)~A moving snapshot of mankind --- ongoing, real-time record of behavior across thousands of topics and communities. Key framing: Reddit's subreddit structure naturally partitions human behavior into discoverable ``environments'' --- exactly what BehaVoir needs for dynamic dataset discovery. Note: demographic biases (age, gender, geography skew) are acknowledged but out of scope.}
+
 \section{References}
 % References
 \begin{itemize}
     \item Our work currently like AlphaGo: Experigen \cite{gupta_accelerating_2026}
     \item Our next steps are to extend this for transfer learning and multi task hypothesis generation similar to \cite{silver_mastering_2017}
     \item Dreamer/MuZero \cite{schrittwieser_mastering_2020}: What we want to achieve for human behavior\cite{hafner_dream_2020}
+    \item Lasswell's communication model (1948): \cite{lasswell1948structure} --- theoretical backbone for our Reddit mapping
+    \item Reddit social roles / community structure: \cite{buntain2014identifying}
 \end{itemize}
 
 
 
+% --- 2026-05-12: Core Theoretical Framing ---
+
+\idea{Communication as the sole learning signal}{%
+We disassociate from cognition entirely. Everything can be learned from human
+\emph{actions} --- i.e., observations. Communication IS the action.
+Data is available and as complete as we can wish for at the level of
+individuals, communities, and social structures --- to the point individuals
+express themselves through communication. Humans themselves only need to
+``see'' or observe each other's actions to understand each other, hence
+observation should be sufficient. This \textbf{jagged intelligence} is what
+we explore and optimize.}
+
+\idea{Lasswell's Model as theoretical backbone}{%
+Communication, from Lasswell's model:
+\textbf{Who} $\to$ \textbf{Says What} $\to$ \textbf{In What Channel}
+$\to$ \textbf{To Whom} $\to$ \textbf{When} $\to$ \textbf{With What Effect}.
+\\[4pt]
+Reddit mapping:
+\begin{itemize}
+    \item \textbf{Who / To Whom}: Imperfect --- individuals may hide or fake identity, but that is the true nature of humans. Assumed \emph{nearly faithful}.
+    \item \textbf{What + Context (Channel)}: This is where ALL Reddit research focuses today --- researchers manually identify structures (subreddits, rules) to give structure to observations (CMV, WritingPrompts, AITA). Even identity is expressed through communication (MBTI signals, etc.). \textbf{We want to automate this and use compute to reach superhuman performance.}
+    \item \textbf{Effect}: We don't have individual atomic upvotes, but aggregate upvotes exist. \textbf{Comments are the atomic unit of conversation.}
+    \item \textbf{When}: Reddit is a moving time series $\Rightarrow$ enables \textbf{pre-registered experiments}, a gold standard in observational sciences. This completes the feedback loop.
+\end{itemize}}
+
+\idea{LLMs as the engine}{%
+LLMs serve as:
+(1)~A general reservoir of \emph{noisy world knowledge},
+(2)~A compute-efficient automated reasoner,
+(3)~Capable at code $\Rightarrow$ scalably voyaging through the labyrinth of human behavior.
+\\[4pt]
+Mapping LLMs to Lasswell:
+\begin{itemize}
+    \item They model \textbf{``what''} which in turn captures ``who, what, whom'' decently enough
+    \item They \emph{don't} know how to interleave it in scientific contexts $\Rightarrow$ weak on \textbf{``channel''}
+    \item Have a diffused sense of \textbf{``when''} (temporal reasoning is weak)
+    \item Starting to show decent prior in \textbf{``effect''}: Hewitt et al.\ (2024) show GPT-4 predicts treatment effects at $r{=}0.85$ vs.\ actual outcomes across 70 pre-registered experiments. See also \cite{park2023generative}, \cite{horton2023homo}, \cite{manning2024automated}, \cite{aher2023using}, \cite{argyle2023out}, \cite{santurkar2023whose}
+\end{itemize}
+The gap: LLMs have the pieces but lack the scientific scaffolding to compose them. BehaVoir provides that scaffolding.}
+
+% --- 2026-05-12: MuZero Analogy Refinements ---
+
+\idea{MuZero's real success factors and what they map to}{%
+MuZero works \emph{not} because its learned model is accurate --- it's objectively
+inaccurate and degrades over longer rollouts. It works because:
+\begin{enumerate}
+    \item \textbf{Value-equivalent modeling}: it only predicts what matters for
+          \emph{decisions} (reward, value, policy), not pixel-perfect reconstruction.
+          $\Rightarrow$ BehaVoir only needs to discover what's \emph{scientifically
+          relevant}, not perfectly structure all of Reddit.
+    \item \textbf{The policy prior regularizes search}: the prior steers MCTS toward
+          regions where the learned model is \emph{more accurate}. Without it, planning
+          in complex environments (Atari) fails completely.
+          $\Rightarrow$ \textbf{LLM priors are not just convenient --- they may be
+          necessary.} The LLM's existing world knowledge regularizes BehaVoir's
+          environment search toward scientifically meaningful regions. Without this
+          prior, raw Reddit is too noisy (the ``Atari without policy prior'' problem).
+    \item \textbf{Planning self-corrects model errors}: short lookahead in
+          approximately-right latent space suffices; MCTS compensates for dynamics
+          errors.
+          $\Rightarrow$ Reddit's time-series nature enables \textbf{pre-registered
+          experiments} = our MCTS. Discovered environments don't need to be perfect;
+          the empirical testing loop corrects errors in the learned model.
+    \item \textbf{End-to-end training}: representation, dynamics, and prediction are
+          jointly optimized. The latent space is whatever makes prediction accurate,
+          not ``the true state of the world.''
+          $\Rightarrow$ BehaVoir's pipeline should be end-to-end: environment
+          discovery, hypothesis generation, and validation jointly optimized.
+\end{enumerate}}
+
+\idea{MuZero caveats that constrain the analogy}{%
+\begin{itemize}
+    \item \textbf{Model is local, not universal}: MuZero's dynamics are only accurate
+          near its own data-collection policy. Implication: discovered environments
+          may be \emph{local} to the current scientific question, not a universal map.
+          Could be a feature (targeted discovery) --- but be explicit.
+    \item \textbf{Sample efficiency was the Achilles heel}: vanilla MuZero needed
+          $\sim$200M frames. EfficientZero fixed this with self-supervised consistency.
+          Our equivalent: how much raw data before the environment model is useful?
+          Self-supervised consistency (does a discovered environment stay coherent
+          over time?) may be essential.
+    \item \textbf{Planning depth limited by model accuracy}: MuZero plateaus at
+          $\sim$100 simulations in messy environments. For BehaVoir: near-term
+          hypotheses are tractable; long causal chains are hard. Lasswell's ``with
+          what effect'' is the hardest dimension --- it requires the longest horizon.
+    \item \textbf{Opacity}: MuZero's latent states are uninterpretable. If BehaVoir
+          uses learned representations, we must address interpretability or
+          accept a similar tradeoff.
+\end{itemize}}
+
+\idea{The deepest lesson from MuZero}{%
+The bar is not ``discover the perfect dataset.'' It's ``discover datasets that are
+\emph{good enough} to generate hypotheses that self-correct through empirical testing.''
+The pre-registered experiment capability (Reddit as time series) is our planning
+mechanism --- it's how we verify and correct the learned model. Accuracy of discovery
+matters less than the \emph{closed loop}: discover $\to$ hypothesize $\to$ test $\to$
+refine. MuZero's model is wrong everywhere, but \emph{less wrong where it matters}.}
+
+% --- Post-MuZero research trajectory (2021--2024) ---
+\idea{Post-MuZero lineage}{%
+Every major follow-up attacked a specific limitation, not the core architecture
+(learned model + tree search + policy prior held throughout):
+\begin{itemize}
+    \item EfficientZero (2021): sample efficiency via self-supervised consistency
+    \item Sampled MuZero (2021): continuous/high-dimensional action spaces
+    \item Stochastic MuZero (2021): stochastic environments
+    \item MuZero Unplugged (2021): offline learning from logged data
+    \item Gumbel MuZero (2022): planning with very few simulations ($\sim$2!)
+    \item UniZero (2024): long-term dependencies via transformer world models
+    \item EfficientZero V2 (2024): unified discrete + continuous, dense + sparse
+\end{itemize}
+Pattern: the skeleton survived; each piece got more robust. For BehaVoir,
+this suggests getting the \emph{skeleton} right matters more than perfecting
+any single component.}
+
+% --- 2026-05-12: Field Naming Decision ---
+
+\idea{Field name: Computational Social Science}{%
+Recommendation from literature survey:
+\begin{enumerate}
+    \item \textbf{Computational Social Science (CSS)} --- dominant term at target venues
+          (ICWSM, WWW, CHI, ACL). EXPERIGEN already uses ``social science research.''
+          Chris Bail's Oxford series, Diyi Yang's Stanford keynotes all rally under this.
+          \textbf{Use as primary field label.}
+    \item \textbf{Computational Behavioral Science} --- useful to narrow scope to
+          \emph{behavior} vs.\ macro social phenomena (elections, policy, economics).
+          Not yet an established venue/track name. Good as a positioning phrase within
+          the abstract.
+    \item \textbf{AI for Social Science} --- gaining traction at AAAI, NeurIPS, ICML
+          workshops. Foregrounds the AI contribution. Use as secondary framing for
+          ML audience.
+\end{enumerate}
+Strategy: lead with \textbf{``computational social science''} as the field, narrow in
+intro by saying we focus on understanding human behavior from observational
+communication data. Use ``AI for social science'' when addressing ML audience.}
+
+% --- 2026-05-12: Curated Observational Datasets Catalog ---
+
+\idea{Reddit-based research datasets (evidence for the ``clean data bottleneck'')}{%
+Social science progress is bottlenecked by clean observational datasets.
+Researchers have spent years curating a small number of Reddit sources because
+the scientific method needs clean formulation, high reward signals, and clear
+context. Using all of Reddit is too noisy. Below: the datasets that survived
+this curation filter.
+
+\textbf{Reddit-Based Datasets:}
+\begin{enumerate}
+    \item \textbf{r/ChangeMyView --- Persuasion.}
+          Delta mechanism gives binary ``mind changed'' label.
+          Structured debate: OP states view, challengers argue, delta = ground truth.
+          Tan et al.\ (2016), ``Winning Arguments'' (Cornell). ConvoKit corpus:
+          34,911 speakers, 293K utterances. The gold standard for computational persuasion.
+
+    \item \textbf{r/AmItheAsshole --- Moral Judgment.}
+          Community votes YTA/NTA/ESH/NAH give distributional ethical labels.
+          Lourie et al.\ (2021), \textsc{Scruples} (AllenAI/AAAI): 32K anecdotes,
+          625K judgments. Forbes et al.\ (2020), Social Chemistry 101. Clean because
+          the voting format forces a verdict on a real-world dilemma.
+
+    \item \textbf{r/WritingPrompts --- Creative Generation.}
+          Short prompt $\to$ long story pairs. Fan et al.\ (2018), ``Hierarchical
+          Neural Story Generation'' (Facebook/ACL): 300K stories, 97K prompts.
+          Clean because prompt--response structure is a natural seq2seq task.
+
+    \item \textbf{r/SuicideWatch --- Suicidal Ideation / Mental Health.}
+          Self-disclosure in a support community. Shing et al.\ (2018), UMD Reddit
+          Suicidality Dataset; CLPsych shared tasks (2019, 2024). Expert-annotated
+          risk on a 4-point scale. Clean because the subreddit self-selects a
+          population expressing genuine distress.
+
+    \item \textbf{Mental health subreddits (r/depression, r/anxiety, r/bipolarreddit, etc.) --- Psychiatric NLP.}
+          15+ support-group subreddits. Low et al.\ (2020), COVID mental health
+          study (JMIR). Benchmark suite: Zenodo dataset (28 subreddits).
+          Clean because each subreddit maps to a diagnostic category.
+
+    \item \textbf{r/explainlikeimfive + r/askscience + r/AskHistorians --- Long-Form QA.}
+          ELI5 dataset (Fan et al., 2019, Facebook): question--answer pairs
+          requiring paragraph-length explanation. Clean because community norms
+          enforce sourced, accessible answers; upvotes reward quality.
+
+    \item \textbf{Self-Annotated Reddit Corpus (SARC) --- Sarcasm Detection.}
+          Users' own \texttt{/s} tag = self-labeled sarcasm. Khodak et al.\ (2018,
+          LREC/Princeton): 1.3M sarcastic statements with conversational context.
+          Clean because annotation is author-provided, not crowdsourced.
+
+    \item \textbf{r/TheOnion vs.\ r/nottheonion --- Satire/Sincerity Detection.}
+          Parallel subreddits: one satirical, one real-but-absurd news. Natural
+          binary classification task. Used in multiple NLP classroom + research
+          projects ($\sim$80--87\% accuracy). Clean because the subreddit boundary
+          is the label.
+
+    \item \textbf{Moral Foundations Reddit Corpus (MFRC) --- Moral Sentiment.}
+          16,123 comments from 12 subreddits (politics, confessions, AITA, etc.),
+          hand-annotated for 8 moral-foundation categories. Trager et al.\ (2022).
+          Clean because trained annotators applied a validated psychology codebook.
+
+    \item \textbf{r/confession / r/offmychest --- Regret and Confessional Behavior.}
+          Prabhala et al.\ (2023), ReDDIT dataset: regret detection (action vs.\
+          inaction vs.\ no regret). Also used in Judge-BERT moral-judgment study.
+          Clean because users self-select to confess norm violations.
+
+    \item \textbf{r/The\_Donald (quarantine studies) --- Moderation \& Radicalization.}
+          Chandrasekharan et al.\ (2022), ``Quarantined!'' (ACM TOCHI): 85M posts,
+          causal inference on quarantine effects. Clean because the policy intervention
+          (quarantine date) provides a natural experiment with a sharp treatment boundary.
+
+    \item \textbf{r/Liberal vs.\ r/Conservative --- Political Ideology / Media Bias.}
+          226K shared articles annotated for ideological bias. Baly et al.\ (2024,
+          ScienceDirect). Clean because subreddit membership proxies ideology;
+          shared URLs link to external ground truth.
+\end{enumerate}
+
+\textbf{Non-Reddit Observational Datasets (same pattern):}
+\begin{enumerate}
+    \item \textbf{Wikipedia Talk Pages --- Toxicity.}
+          Jigsaw/WikiDetox: 160K comments, 6 toxicity labels; 100K diffs with 1M
+          crowdsourced annotations. Wulczyn et al.\ (2017), ``Ex Machina'' (WWW).
+          Perspective API. Clean because talk pages have norms + extensive moderation logs.
+
+    \item \textbf{Twitter/X --- Sentiment \& Hate Speech.}
+          SemEval shared tasks (2013--2019): sentiment (Rosenthal et al., 2017),
+          hate speech (Basile et al., 2019, HatEval), offensive language (Davidson
+          et al., 2017). TweetEval benchmark. Clean because shared-task curation
+          enforces annotation standards and train/test discipline.
+
+    \item \textbf{Stack Overflow --- Technical QA \& Community Dynamics.}
+          SNAP temporal network; annual Developer Survey (49K+ respondents);
+          HuggingFace stack-exchange-preferences (RLHF training). 83M+ Q\&A pairs
+          over 17 years. Clean because accepted-answer + voting gives explicit
+          quality signal.
+\end{enumerate}
+
+\textbf{Key takeaway for BehaVoir:} Every dataset above exists because humans
+manually identified a subreddit/platform whose \emph{structure} provides free
+labels (deltas, votes, \texttt{/s} tags, subreddit boundaries, policy dates).
+This is what BehaVoir aims to automate: discovering these clean observational
+environments at scale rather than one-at-a-time over decades of manual curation.}
+
+% --- 2026-05-12: LLM Behavior Simulation Literature ---
+
+\idea{LLMs have decent priors on behavioral ``effect'' --- the evidence}{%
+Key papers establishing that LLMs encode usable behavioral priors:
+\begin{enumerate}
+    \item \textbf{Generative Agents} \cite{park2023generative} (UIST 2023): 25 LLM agents in a sandbox autonomously form relationships, spread information, coordinate. Emergent social dynamics without explicit programming.
+    \item \textbf{Homo Silicus} \cite{horton2023homo} (NBER 2023): LLMs replicate classic economic experiments qualitatively. Coins the term. Argues LLMs are implicit computational models of humans.
+    \item \textbf{Automated Social Science} \cite{manning2024automated} (NBER 2024): LLMs both generate hypotheses AND serve as subjects. Predict \emph{sign} of causal effects well, but not magnitudes. Key: simulation reveals knowledge LLMs cannot directly articulate.
+    \item \textbf{Turing Experiments} \cite{aher2023using} (ICML 2023): Replicate Ultimatum Game, Milgram, Garden Path. ``Hyper-accuracy distortion'' --- decent but imperfect.
+    \item \textbf{Silicon Samples} \cite{argyle2023out} (Political Analysis 2023): LLMs conditioned on demographics approximate ANES survey distributions.
+    \item \textbf{Whose Opinions?} \cite{santurkar2023whose} (ICML 2023): Systematic bias toward college-educated viewpoints. Priors are decent but skewed.
+    \item \textbf{Hewitt et al.\ (2024, preprint)}: GPT-4 predicts treatment effects at $r{=}0.85$ across 70 pre-registered experiments (476 effects, 105K participants). Strongest direct evidence. (TODO: find stable DOI)
+\end{enumerate}
+\textbf{Synthesis for BehaVoir:} LLMs have the behavioral priors (``effect'') but lack
+scientific scaffolding (``channel''). Manning et al.\ is closest to our argument ---
+they show LLMs work as scientist AND subject but need structure. BehaVoir provides
+that structure via dynamic environment discovery.}
+
+% --- 2026-05-12: Critique-Driven Refinements ---
+
+\idea{Voir = to see; the title is the thesis}{%
+``Voir'' means ``to see'' in French. LLMs and current AI operate at the level
+of observations --- what can be digitally recorded. Whatever they understand about
+us is limited to that, creating a \textbf{jagged view} --- partial, uneven,
+observation-bound --- of the space between cognition and behaviorism. BehaVoir
+embraces this constraint. The title encodes the thesis: \textbf{BehaVoir} =
+behavior, seen. We don't claim to model cognition; we claim that observations
+are sufficient for \emph{predictive} behavioral science.}
+
+\idea{Reddit as Atari, not as AlphaGo's Go}{%
+Reddit is NOT the contribution --- it is the data substrate. Analogous to Atari
+for MuZero: a singular data format hosting a wide array of distinct environments
+(subreddits), each with different rules, populations, and reward signals.
+MuZero's algorithm operates across 57 Atari games via the same pixel/action
+interface; BehaVoir operates across thousands of behavioral environments via
+Reddit's uniform structure (posts, comments, votes, timestamps, user histories).
+\\[4pt]
+Acknowledged limits: population selection (not reflective of world),
+content selection (skewed), channel (digital only, ``magic circle'').
+But: LLMs \emph{still cannot model even Reddit-level behavior}.
+The method requires a singular data format, not specifically Reddit.}
+
+\idea{Anti-circularity principle for LLMs}{%
+LLMs trained on Reddit used to reason about Reddit = circular dependency.
+Design principle: do \textbf{not} bake knowledge, planning, or policy into
+parameters. Use \textbf{written directives and hypotheses} --- explicit,
+inspectable, causally verifiable --- for unbiased inference. The LLM is a
+reasoning tool and code executor, not a knowledge oracle. Its parametric
+knowledge is a \emph{prior} that must be verified against data, never
+trusted directly.}
+
+\idea{Epistemic rigor as a core contribution}{%
+Humans do science around observational datasets (CMV, etc.). What makes these
+structures special? How did humans come up with solving those biases? Theories
+developed from these \emph{do} hold in experiments (CMV persuasion findings
+replicate in lab). Ideally: maximize real-world experiment validity. Method
+discovers dataset $\to$ poses biases/constraints $\to$ fixes end-to-end
+$\to$ maximum epistemic rigor $\to$ field experiments hold.
+This is not a nice-to-have --- it's a core contribution.}
+
+\idea{Predictive sufficiency, not causal reconstruction}{%
+MuZero's deepest lesson: you don't need to reconstruct the true generative
+process. Hidden states need not correspond to real states --- they just need
+to support accurate predictions. For BehaVoir: we don't need to model cognition.
+We need representations that are \emph{predictively sufficient} for behavioral
+science. The bar is ``generates hypotheses that hold in field experiments,''
+not ``correctly models the human mind.'' Keep this claim soft in the paper ---
+let results speak. But it is the philosophical position.}
+
+% --- 2026-05-12: Refined Theoretical Position ---
+
+\idea{BehaVoir learns rules, not representations}{%
+The key distinction from MuZero, DreamerV3, and the entire latent world model
+lineage: \textbf{BehaVoir's artifacts are explicit hierarchical rules, not latent
+states.} We predict \emph{theories} --- inspectable, auditable, causally verifiable
+directives that encapsulate an LLM's understanding of a behavioral environment.
+\\[4pt]
+\textbf{What we share with MuZero/DreamerV3:}
+\begin{itemize}
+    \item \textbf{Sufficiency}: we don't reconstruct entire behavior to plan and
+          understand it. We learn only what's sufficient for scientific decisions.
+          Grimm \& Barreto's value equivalence principle (NeurIPS 2020--2022)
+          formalizes this: a model need not be accurate about the environment,
+          only about what matters for planning. Our rules are the value-equivalent
+          model --- sufficient for generating and testing hypotheses.
+    \item \textbf{DreamerV3's generality}: one algorithm, fixed hyperparameters,
+          150+ tasks. We aim for the same: one method across thousands of Reddit
+          environments. DreamerV3 showed larger models $\to$ fewer interactions
+          needed. Our scaling aspiration is the same.
+    \item \textbf{Planning self-corrects}: MuZero's model is inaccurate but
+          compensated by MCTS. Our rules may be imperfect but the empirical
+          testing loop (Reddit's time series $\to$ pre-registered experiments)
+          corrects them.
+\end{itemize}
+\textbf{What we differ on --- the critical distinction:}
+\begin{itemize}
+    \item \textbf{Non-latent artifacts}: MuZero/DreamerV3 learn opaque latent
+          dynamics. We learn \emph{explicit rules} --- readable, hierarchical,
+          structured. The artifacts themselves are the science. This solves the
+          opacity problem that plagues all latent world models.
+    \item \textbf{Rules aid LLM understanding}: the hierarchical rules don't
+          just compress the environment --- they make the LLM \emph{capable of
+          understanding all aspects} available from Reddit for a given question.
+          The LLM is a reasoning engine operating on discovered rules, not an
+          encoder producing embeddings.
+    \item \textbf{Auditability for science}: latent representations cannot be
+          peer-reviewed. Rules can. This is not a nice-to-have --- it's what
+          makes the output \emph{science} rather than prediction.
+\end{itemize}}
+
+\idea{The collapse problem is our noise problem}{%
+In the world model literature, the central failure mode is \textbf{representation
+collapse} --- the model maps all inputs to the same representation, trivially
+satisfying the prediction objective (JEPA's Achilles heel for years; solved only
+in 2026 with LeWorldModel's regularization).
+\\[4pt]
+Our structural analogue: \textbf{environment collapse} --- if the discovery
+process lacks structure, all subreddits look equally (un)promising. Raw Reddit
+is too noisy to differentiate. Every approach that solved collapse used explicit
+regularization:
+\begin{itemize}
+    \item EfficientZero: self-supervised consistency (does the learned model
+          agree with itself over time?)
+    \item DreamerV3: symlog normalization, KL balancing, percentile return
+          normalization
+    \item LeWorldModel: Gaussian regularizer on latent embeddings
+\end{itemize}
+For BehaVoir, the anti-collapse mechanism is the \textbf{hierarchical rule
+structure itself}. Rules that are too generic (``people discuss things'') or
+too specific (overfitting to one thread) should be regularized out. The
+hierarchy provides the inductive bias: rules at different levels of abstraction
+must be internally consistent. This is our analogue of DreamerV3's robustness
+techniques.}
+
+\idea{Sufficiency spectrum: our design question}{%
+From Grimm \& Barreto and the ``Latent State Design under Sufficiency
+Constraints'' line (2025):
+\begin{itemize}
+    \item \textbf{Observation sufficiency} (reconstruct everything) --- wasteful
+    \item \textbf{Prediction sufficiency} (predict future observations) ---
+          necessary but not enough for control
+    \item \textbf{Control sufficiency} (preserve what affects decisions) ---
+          what you actually need
+    \item \textbf{Value equivalence} (preserve Bellman-correct value estimates)
+          --- tightest useful criterion
+\end{itemize}
+Critical insight: \textbf{prediction sufficiency does not imply control
+sufficiency}. You can perfectly predict what happens next while discarding
+distinctions that matter for what to \emph{do}. Applied to BehaVoir: we don't
+need rules that predict all Reddit behavior --- we need rules that are
+\textbf{sufficient for scientific control}: posing hypotheses, designing
+experiments, predicting outcomes. This is a tighter, more useful criterion
+than ``understand Reddit.'' And because our rules are explicit (non-latent),
+we can \emph{inspect} whether the sufficiency criterion is met.}
+
+% --- 2026-05-12: Undocumented ideas from conversation ---
+
+\idea{The magic circle of digital communication}{%
+When people enter Reddit (or any digital platform), they enter a ``magic
+circle'' --- a term from game design (Huizinga, 1938) meaning a bounded space
+with its own rules, norms, and incentive structures. Subreddits are
+\emph{literally} magic circles: explicit rules in sidebars, moderators as
+referees, community-specific norms for what counts as a valid contribution.
+This is exactly what makes them scientifically useful --- the magic circle
+provides the structure that transforms noisy human behavior into something
+tractable. BehaVoir's environment discovery is, in essence, \textbf{discovering
+magic circles at scale} --- finding bounded behavioral arenas where the rules
+are implicit but discoverable.}
+
+\idea{Identity is expressed through communication, not verified externally}{%
+On Reddit, ``who'' is revealed through ``what.'' There is no external identity
+verification --- users may hide or fake identity. But the key insight is:
+\emph{that is the true nature of humans anyway.} People manage impressions in
+all social contexts. On Reddit, identity leaks through communication patterns
+(MBTI signals from writing style, political leaning from subreddit
+participation, expertise from answer quality). This collapses the who/what
+distinction: on a text-only platform, identity IS communication.
+Methodological implication: we don't need ground-truth identity; behavioral
+fingerprints in communication are sufficient.}
+
+\idea{Comments as atomic unit, upvotes as aggregate signal}{%
+Reddit provides a dual-signal structure:
+\begin{itemize}
+    \item \textbf{Comments} = atomic unit of conversation. Rich, granular,
+          contextual. Each comment is a behavioral act with author, timestamp,
+          content, parent, and position in a thread.
+    \item \textbf{Upvotes} = aggregate community signal. We don't have
+          individual atomic upvotes (who voted), but the aggregate score
+          reflects community judgment. This is a \emph{collective evaluation}
+          function --- noisy but massive.
+\end{itemize}
+This dual structure (granular behavior + aggregate evaluation) is rare in
+observational data and is a key reason Reddit works as a behavioral laboratory.}
+
+\idea{The EXPERIGEN $\to$ AlphaZero intermediate step}{%
+Between EXPERIGEN (one dataset) and BehaVoir (discover datasets), there is an
+intermediate result: the same EXPERIGEN algorithm can be applied to
+\textbf{transfer hypotheses across datasets} or \textbf{learn from multiple
+sources simultaneously}. This is the AlphaZero step --- same algorithm, multiple
+``games,'' no domain-specific modification. This has been observed but is not yet
+published. It sits between EXPERIGEN and BehaVoir in the research trajectory
+and may become part of this paper or a companion piece.}
+
+\idea{The bottleneck is shared: human AND AI scientists are stalled at datasets}{%
+A key framing point: the dataset bottleneck is not just an AI problem. Human
+social scientists are \emph{equally} bottlenecked. Experiments are hard to run,
+require extensive theorizing, human time, and effort. As data grows, both human
+and AI researchers rely more on observational datasets. Progress for
+\emph{both} is stalled at the dataset level. This means solving the bottleneck
+accelerates the \emph{entire field}, not just the AI pipeline. This should be
+a central claim in the introduction.}
+
+\idea{The closed-loop feedback architecture}{%
+BehaVoir implies a specific feedback loop, analogous to MuZero's
+act--observe--plan cycle:
+\begin{enumerate}
+    \item \textbf{Discover} an observational environment (subreddit/structure
+          with implicit rules)
+    \item \textbf{Comprehend} its rules, biases, and constraints
+    \item \textbf{Generate} hypotheses about behavior within it
+    \item \textbf{Test} via pre-registered experiments (exploit Reddit's
+          time-series nature: hypothesize on data before time $T$, validate
+          on data after $T$)
+    \item \textbf{Refine} both the hypotheses and the environment model
+\end{enumerate}
+This loop is self-correcting: discovered environments don't need to be perfect,
+because the testing step corrects errors (just as MuZero's MCTS compensates
+for dynamics model inaccuracies). The loop IS the method.}
+
+\idea{Three levels of contribution (from critique analysis)}{%
+Cleanly separate what is novel:
+\begin{enumerate}
+    \item \textbf{Environment discovery}: Automate identification of clean
+          observational environments from raw data. This is the ``What +
+          Context'' problem humans have done manually for decades. [NEW]
+    \item \textbf{Environment comprehension}: Learn the implicit rules, norms,
+          biases, and reward structures of discovered environments. [NEW]
+    \item \textbf{Hypothesis generation and testing}: Apply EXPERIGEN-style
+          hypothesis search within discovered environments. [INHERITED from
+          EXPERIGEN, but now at scale across many environments]
+\end{enumerate}
+Levels 1 and 2 are BehaVoir's novel contributions. Level 3 is inherited
+but demonstrated at unprecedented scale.}
+
+\idea{The narrative arc of the paper}{%
+Introduction should follow the DeepMind trajectory as a structural device:
+\begin{enumerate}
+    \item Social science is slow. Iterative cycles of theorize--experiment--validate.
+    \item EXPERIGEN proved AI can do end-to-end social science on curated data
+          (the AlphaGo moment).
+    \item But curated data is the bottleneck. Only a handful of datasets exist,
+          each taking years of human effort to identify and validate.
+    \item This bottleneck stalls \emph{both} human and AI scientists.
+    \item BehaVoir removes it: dynamically discover observational environments
+          from raw data, comprehend their structure, and run science at scale.
+    \item Reddit is the first platform (Atari) --- singular format, many environments.
+    \item The method generalizes beyond Reddit to any uniformly structured
+          behavioral data source.
+\end{enumerate}}
+
+\idea{MuZero analogy must be stated precisely}{%
+Readers will misread the MuZero analogy as ``discovering new environments.''
+But MuZero's contribution is learning a dynamics model \emph{within} a single
+environment without being given the rules. The correct mapping:
+\begin{itemize}
+    \item EXPERIGEN needs a pre-curated dataset = AlphaZero needs game rules
+    \item BehaVoir learns the structure from raw observations = MuZero learns
+          the dynamics from raw pixels
+\end{itemize}
+MuZero doesn't discover which game to play --- it removes the dependency on
+being \emph{given} the rules. Similarly, BehaVoir removes the dependency on
+being \emph{given} curated datasets. State this explicitly in the paper or
+reviewers will attack it.}
+
+\idea{``We are here'' on the MuZero diagram}{%
+User referenced the MuZero blog post diagram
+(\texttt{deepmind.google/blog/muzero-mastering-go-chess-shogi-and-atari-without-rules/}).
+The positioning is: we are at the point where the environment model is being
+\emph{learned}, not just used. EXPERIGEN assumed a clean environment (curated
+dataset); BehaVoir learns what the environment IS from raw observations.
+Consider including a version of this diagram (adapted for our trajectory)
+in the introduction or related work.}
+
+% --- 2026-05-12: From paper reading + critique session ---
+
+\idea{EXPERIGEN's limitations define BehaVoir's scope}{%
+From reading the EXPERIGEN paper, these are the specific walls it hits:
+\begin{enumerate}
+    \item \textbf{One dataset at a time}: no transfer across domains. The
+          hypothesis bank is local to a single dataset.
+    \item \textbf{No unified model}: produces independent hypotheses, never
+          synthesized into a coherent theory.
+    \item \textbf{No causal reasoning}: all results are correlational/observational.
+          Explicitly avoids causal claims.
+    \item \textbf{LLM inference plateaus at ${\sim}20$ outer iterations}:
+          context window saturation degrades hypothesis quality. AutoML variant
+          continues improving to 40 iterations --- suggesting a hybrid handoff.
+    \item \textbf{Feature extractor noise sensitivity}: even 10--20\% label error
+          degrades both accuracy and hypothesis count.
+    \item \textbf{No multi-variable hypotheses}: generates individual hypotheses,
+          not conditional or interactive ones (though iterative refinement helps).
+\end{enumerate}
+BehaVoir inherits EXPERIGEN's hypothesis engine (level 3 contribution) but must
+overcome these limits through environment discovery (level 1) and comprehension
+(level 2). The AutoML handoff insight is particularly relevant: LLMs for
+interpretable discovery, AutoML for scaling.}
+
+\idea{Superhuman through information asymmetry}{%
+The argument for superhuman performance is not just compute --- it's
+\textbf{information asymmetry}. No individual human expert possesses knowledge
+equivalent to the entirety of Reddit. An expert in persuasion knows CMV deeply
+but not r/relationship\_advice. A mental health researcher knows r/SuicideWatch
+but not r/AITA's moral reasoning patterns. BehaVoir, operating across all
+environments simultaneously, has access to cross-domain patterns no single human
+can hold. Superhuman here means: discovering behavioral regularities that span
+environments in ways no expert's training prepares them to see. We will
+benchmark against experts at the end and let the comparison define the claim.}
+
+\idea{Observational findings DO replicate in controlled experiments}{%
+A crucial empirical observation the user emphasized: theories developed from
+observational datasets (CMV persuasion findings, mental health indicators,
+moral reasoning patterns) \emph{do come out to be true in controlled
+experiments}. This is not obvious --- the entire field of causal inference
+exists because observational data is supposed to be unreliable. But the
+structures these datasets provide (clean formulation, natural labels, community
+norms) apparently create conditions that approximate experimental control.
+This is BehaVoir's epistemic foundation: if we can discover environments with
+similar structural properties, their observational findings should also
+replicate. The goal is to maximize this: method discovers dataset $\to$ poses
+biases/constraints $\to$ \emph{fixes} them end-to-end $\to$ field experiments
+hold.}
+
+\idea{Learning WHAT to learn, not just predicting}{%
+The user's phrasing was precise: ``the key decisions that improve its
+understanding.'' This is more active than plain predictive sufficiency.
+The system doesn't just predict --- it learns \emph{what to learn next}.
+Which environment to explore? Which bias to address? Which hypothesis to
+test first? This is the planning component (MuZero's MCTS analogue):
+making decisions about where to direct scientific attention for maximum
+epistemic gain. The system learns a policy over scientific decisions,
+not just a model of behavior.}
+
+\idea{Dreamer's sample efficiency lesson}{%
+From reading the Dreamer paper: it achieves ${\sim}20{\times}$ fewer
+environment steps than model-free baselines by learning in imagination rather
+than real experience. For BehaVoir: ``real experiments'' (actually testing
+hypotheses on live data) are expensive. If we can learn a sufficiently good
+environment model, we can generate and pre-filter hypotheses in ``imagination''
+(simulated environments) before spending compute on real validation. This
+is the sample efficiency argument: fewer pre-registered experiments needed
+per unit of scientific progress.}
+
+\idea{Soft-claim strategy: let results prove the thesis}{%
+Explicit writing strategy: keep the ``communication is sufficient'' claim soft
+in the paper. Don't make it a hard philosophical stance. Instead, frame it as:
+``we explore what can be achieved with observations alone'' and let the
+experimental results demonstrate the reach and limits. This avoids getting
+bogged down in cognition-vs-behaviorism debates and keeps the paper focused
+on the empirical contribution. The title (BehaVoir = behavior, seen) makes
+the position clear without requiring a philosophical defense.}
+
 %  RAW SNIPPETS / HALF-THOUGHTS
 \section{half thoughts}
+
+% - "slowly we..." — the trajectory from EXPERIGEN to BehaVoir is gradual:
+%   one-dataset discovery → multi-dataset transfer → environment discovery.
+%   Each step removes a dependency. The paper should feel like a natural
+%   next step, not a discontinuous leap.
+%
+% - The field naming question is settled (CSS) but the paper title uses
+%   "Human Behavior" not "Social Science" — this is intentional. BehaVoir
+%   is about behavior specifically, not all of social science. The narrowing
+%   is strategic: behavior can be observed; institutions, policies, markets
+%   are harder to observe purely from communication.
+%
+% - Reddit's magic circle has a temporal dimension too: subreddit rules
+%   change over time, moderator policies shift, community norms evolve.
+%   A discovered environment is a snapshot. The time-series nature lets
+%   us track how environments themselves change — meta-discovery.
+%
+% - The anti-circularity principle (written directives, not baked parameters)
+%   connects to a broader philosophy: the system should be auditable. Every
+%   hypothesis, every environmental judgment, every bias assessment should
+%   be traceable back to explicit reasoning, not opaque model internals.
+%   This is not just about avoiding circularity — it's about epistemic
+%   transparency as a first-class concern.
+%
+% - Reddit covers most topics that get discussed, but with skew. This is
+%   different from "content selection bias" — it's more like a wide-angle
+%   lens with distortion. The coverage is vast; the faithfulness varies.
+%
+% - "Between cognition and behaviorism" — BehaVoir is not squarely in
+%   either camp. It's observation-only (behaviorist in method) but aims to
+%   understand behavior (not just predict it). The jagged view is the space
+%   in between: what you can see of the mind through actions alone. This is
+%   a novel epistemological position worth articulating carefully.
+%
+% - EXPERIGEN's A/B test result (+344% uplift, p < 1e-6) is powerful
+%   ammunition for the introduction. It proves the hypothesis engine works
+%   in the real world. BehaVoir's claim is: now apply that engine at scale,
+%   across dynamically discovered environments.
+%
+% - The AutoML handoff from EXPERIGEN (LLMs plateau at ~20 iterations,
+%   AutoML continues to 40) suggests BehaVoir may need a similar hybrid:
+%   LLMs for interpretable environment discovery, automated methods for
+%   scaling hypothesis testing within discovered environments.
