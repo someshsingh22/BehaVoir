@@ -22,5 +22,71 @@
 \pending{Solve the epistemic rigor bottleneck: how did humans solve biases in observational datasets (CMV, etc.)? What makes these structures special? How to maximize real-world experiment validity --- method discovers dataset, poses biases/constraints, fixes end-to-end, so field experiments hold.}
 \pending{Operationalize ``superhuman performance'' --- define metrics for comparison with human experts.}
 
+\section{Vidit's Rough}
+
+\subsection{Subreddit Selection Rationale}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Subreddit} & \textbf{Why Selected} \\
+\hline
+\textbf{nostalgia} & Dedicated memorability/nostalgia community \\
+\textbf{tipofmytongue} & People searching for half-remembered media \\
+\textbf{tipofmyjoystick} & Same pattern for games \\
+\textbf{Glitch\_in\_the\_Matrix} & Vivid anomalous experiences \\
+\textbf{MandelaEffect} & Collective false memories \\
+\textbf{OldSchoolCool} & Visual nostalgia, memorable past images \\
+\textbf{bestof} & Community-curated memorable content \\
+\textbf{DoesAnybodyElse} & Shared memorable experiences/feelings \\
+\textbf{AskOldPeople} & Older adults reflecting on memorable events \\
+\textbf{CasualConversation} & Personal anecdotes about memorable moments \\
+\textbf{TrueOffMyChest} & Confessions about memorable events \\
+\textbf{offmychest} & Personal stories memorable enough to share \\
+\textbf{tifu} & Memorable embarrassing/disastrous stories \\
+\textbf{confession} & Confessions of memorable acts/events \\
+\textbf{AskReddit} & Many ``what's the most memorable X'' threads (title-filtered) \\
+\textbf{movies} & ``Most memorable scene/film'' discussions (title-filtered) \\
+\textbf{books} & ``Books that stayed with you'' discussions (title-filtered) \\
+\textbf{gaming} & ``Most memorable gaming moment'' (title-filtered) \\
+\textbf{Games} & Discussion-focused gaming (title-filtered) \\
+\textbf{Music} & ``Songs you'll never forget'' (title-filtered) \\
+\textbf{travel} & Memorable travel experiences (title-filtered) \\
+\textbf{todayilearned} & Memorable facts (title-filtered) \\
+\textbf{Showerthoughts} & Observations about memory (title-filtered) \\
+\textbf{relationships} & Memorable relationship moments (title-filtered) \\
+\textbf{relationship\_advice} & Memorable relationship events (title-filtered) \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsubsection*{Rejected:}
+\begin{itemize}
+    \item r/2000sNostalgia (26 shards), r/gamenostalgia (14 shards): minimal corpus presence
+    \item r/AustralianNostalgia, r/IndiaNostalgia: regional, not generalizable
+    \item r/dreams, r/WritingPrompts: fiction/niche, memorability incidental
+    \item r/pics, r/mildlyinteresting: visual content, comment text doesn't discuss memorability
+\end{itemize}
+
+\subsubsection{Corpus Limitations}
+\begin{enumerate}
+    \item \textbf{Temporal skew}: March--April 2020 = early COVID-19 lockdowns. Memorability discussions biased toward pandemic experiences.
+    \item \textbf{Missing submissions}: 25.3\% of threads have no submission in the corpus (likely deleted/removed posts). These threads are kept if comments show memorability signals.
+    \item \textbf{AskReddit sampling}: Randomly sampled to 30\% cap; some memorability threads may have been excluded.
+    \item \textbf{Weak supervision precision}: Lexical LFs miss implicit memorability expressed without standard phrases.
+\end{enumerate}
+
+\subsubsection{Alternatives Considered and Rejected}
+\begin{enumerate}
+    \item \textbf{Embedding-based semantic similarity}: Better for nuanced memorability but risks timeout at scale.
+    \item \textbf{Blanket Tier 1 positive labelling (iteration 1 approach)}: Produced \textasciitilde40\% false positive rate; replaced with uniform weak supervision.
+    \item \textbf{Score-based stratified sampling}: Research question is about memorability regardless of engagement.
+    \item \textbf{LLM-based labelling}: Gold standard quality but infeasible at scale.
+    \item \textbf{Tier 1 only collection}: High precision but misses cross-discourse signals in r/gaming, r/movies, etc.
+\end{enumerate}
+
+
 \subsection*{Experiments}
 % \experiment{name}{status}
