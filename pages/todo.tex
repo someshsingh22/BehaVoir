@@ -88,5 +88,59 @@
 \end{enumerate}
 
 
+
 \subsection*{Experiments}
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{6pt}
+
+\label{tab:improvement_stats_t03}
+\begin{tabular}{lccc}
+\toprule
+Metric & Ours & Open-Web Agent & Reddit-Source Agent \\
+\midrule
+Overall relative TVD improvement (\%) & \textbf{8.44} & 6.45 & 5.16 \\
+Overall queries improved (\%) & \textbf{69.2} & 62.5 & 62.9 \\
+Mean improvement among improved queries (\%) & 21.42 & \textbf{22.81} & 20.73 \\
+\midrule
+High-TVD: relative TVD improvement (\%) & 8.14 & 7.82 & \textbf{8.43} \\
+High-TVD: queries improved (\%) & \textbf{63.6} & 61.0 & 58.4 \\
+High-TVD: mean improvement when improved (\%) & 19.38 & \textbf{19.78} & 19.54 \\
+\midrule
+Medium-TVD: relative TVD improvement (\%) & \textbf{8.65} & 5.46 & 2.80 \\
+Medium-TVD: queries improved (\%) & \textbf{57.0} & 49.5 & 42.1 \\
+Medium-TVD: mean improvement when improved (\%) & 23.06 & \textbf{25.49} & 21.92 \\
+\bottomrule
+\end{tabular}
+\caption{Improvement statistics after grounded re-evaluation on the matched (question, dataset) pairs using a High-TVD threshold of 0.3. Higher is better for all metrics.}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+
+\label{tab:migration}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Initial Bucket} & \textbf{Change} & \textbf{\# (\%)} \\
+\midrule
+High ($n=77$)
+    & \checkmark\ Improved (High$\rightarrow$Medium/Low) & 29 (37.7\%) \\
+    & -- No change (High$\rightarrow$High) & 48 (62.3\%) \\
+\midrule
+Medium ($n=107$)
+    & \checkmark\ Improved (Medium$\rightarrow$Low) & 32 (29.9\%) \\
+    & -- No change (Medium$\rightarrow$Medium) & 70 (65.4\%) \\
+    & $\times$ Worsened (Medium$\rightarrow$High) & 5 (4.7\%) \\
+\midrule
+\textbf{Overall} & Improved & \textbf{61 / 184 (33.2\%)} \\
+                 & Worsened & 5 / 184 (2.7\%) \\
+                 & Any bucket change & 66 / 184 (35.9\%) \\
+\bottomrule
+\end{tabular}
+\caption{Bucket migration after grounding (Ours).}
+\end{table}
+
 % \experiment{name}{status}
