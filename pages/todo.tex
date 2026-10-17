@@ -116,6 +116,35 @@ Medium-TVD: mean improvement when improved (\%) & 23.06 & \textbf{25.49} & 21.92
 \end{tabular}
 \caption{Improvement statistics after grounded re-evaluation on the matched (question, dataset) pairs using a High-TVD threshold of 0.3. Higher is better for all metrics.}
 \end{table}
+```latex
+\subsection{External Evaluation Results}
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{lccc}
+\toprule
+\textbf{Evaluation} & \textbf{Original} & \textbf{Ours} & \textbf{Best Ours} \\
+\midrule
+Argument Mining (Dr.~Inventor F1) &
+45.26 &
+\textbf{47.78} &
+\textbf{51.19} \\
+
+MASIVE $\rightarrow$ EmoEvent (Macro-F1) &
+27.30 &
+\textbf{31.35} &
+\textbf{31.35} \\
+\bottomrule
+\end{tabular}
+\caption{External evaluation results comparing the original source datasets
+with automatically discovered datasets. For argument mining, AutoData improves
+mean Dr.~Inventor F1 from 45.26 to 47.78, with the best run reaching 51.19.
+For affective-state modeling, Coverage/V2 AutoData achieves 31.35 Macro-F1 on
+EmoEvent compared with 27.30 for the matched original MASIVE baseline.}
+\label{tab:external_eval_results}
+\end{table}
+```
 
 \begin{table}[t]
 \centering
