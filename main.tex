@@ -1,6 +1,9 @@
 \documentclass{article}
 \usepackage{graphicx}
 \usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,shapes.geometric}
+\usepackage{hyperref}
 
 
 \title{Towards Automated Goal Driven Dataset Discovery}
@@ -10,6 +13,25 @@
 \maketitle
 
 \section{Introduction}
+Progress in computational social science is gated by clean observational datasets: environments such as
+r/ChangeMyView deltas or r/AmItheAsshole verdicts took researchers months to years to find, filter and label.
+Because curation is expensive, it gravitates to the head of the distribution, and the long tail of
+phenomenon~$\times$~audience~$\times$~context combinations stays unstudied. LLM agents can amortize this cost into
+compute, turning a research question into a curated dataset on demand. Goal-driven dataset discovery is therefore a
+prerequisite for scaling both human and automated science~\cite{gupta_accelerating_2026}; our goal is to measure
+whether agents can already do it.
+
+Dataset quality is hard to judge in isolation, so we ground evaluation in published papers that released their code
+(Table~\ref{tab:environments}). The agent sees only the research question, a fixed raw corpus snapshot with its
+documentation, and a compute budget; the resulting dataset is scored by downstream utility, both with the authors'
+own pipeline and with an open, standardized pipeline against the authors' dataset (Figure~\ref{fig:approach}). This
+makes the question falsifiable---\emph{can an agent, under a time budget, match datasets experts spent months
+building?}---and exposes characteristic failure modes such as hallucinated schemas, prompt anchoring and label
+leakage, giving a yardstick to track progress.
+
+\input{figures/approach}
+
+% --- rough notes ---
 Difference between harini and vidits methods for mining datasets and the principal architectures that they adopted because of audience vs phenomenon. This provides an idea that we can pivot to one or more of lasswel's pillars. 
 
 While earlier researchers used to choose simpler or broad or specific methodology that caters to the head of the distribution because this gives them the best advantage to human resources ratio, however this cost of data research is amortized among agents.
@@ -22,6 +44,21 @@ We can choose the subreddit to model any of the dimensions of lasswel.
 Subreddit and the specific behaviors observed over there -> Harini made audience as the pivot while selecting the phenomenon (top 20 vs remaining authors) whereas Vidit made phenomena as the pivot without imposing audience. Harini could make CMV as the pivot with self attested deltas. 
 
 Subpop -> Audience (Demographic) x Surveys -> economic, social
+
+\section{Environments and Results}
+\input{tables/environments}
+
+\paragraph{Results so far.} On Reddit, our agent-built data beats Winning Args on Dr.~Inventor argument mining
+(+1.82 F1 on average) and improves MASIVE affect identification by 20\%. Both affect runs are still thread-centric:
+11.36k threads / 171.7k comments convert to only 15.17k train + 801 val MASIVE examples (4.41k unique affect
+targets), and EmoEvent performance concentrates on \emph{happy}/\emph{sad}, suggesting many collected replies are
+neutral advice; we are moving to affect-centric collection. On AlignX, AutoData trails the original (62.75\% vs.\
+65.02\% pooled; +2.82 on P-SOUPS concise/detail, $-$7.22 on PRISM). The gap persists with 5K unique examples each
+(62.52\% vs.\ 67.81\%), ruling out duplication from reversed pairs; the most likely cause is persona richness
+(median 34 vs.\ 55 words), and we are retraining on LLM-enriched personas. On GitHub, our Decompile-Bench v2 data
+beats DCBench-1.3B on HumanEval re-executability (22.56 vs.\ 20.66) and on HumanEval/MBPP edit similarity, winning at
+O1--O3 but not O0 (Table~\ref{tab:decompile}); it trails on GitHub2025 after decontamination removed much of our
+training data. For RepairLLaMA our baseline does not yet match the paper's model and a larger run is in progress.
 
 \input{pages/scratch}
 \input{pages/todo}

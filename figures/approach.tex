@@ -1,0 +1,89 @@
+% Overview of the benchmark (redrawn from DatasetDiscovery.drawio).
+% Requires: tikz with libraries arrows.meta, shapes.geometric.
+\begin{figure}[t]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+  font=\sffamily\small, >={Stealth[length=2.2mm]},
+  ours/.style={fill=red!15, draw=red!60!black},
+  authors/.style={fill=yellow!30, draw=orange!70!black},
+  third/.style={fill=blue!10, draw=blue!60!black},
+  neutral/.style={fill=white, draw=black},
+  db/.style={cylinder, shape border rotate=90, aspect=0.25, minimum width=1.4cm, minimum height=1.5cm},
+  doc/.style={rectangle, align=center, minimum width=2.6cm, minimum height=0.9cm},
+  code/.style={rectangle, align=center, minimum width=2.0cm, font=\sffamily\footnotesize},
+  harness/.style={draw, thick, rounded corners=4pt},
+  htitle/.style={font=\sffamily\small\bfseries, align=center},
+  lbl/.style={font=\sffamily\footnotesize, align=center},
+  note/.style={font=\sffamily\scriptsize, align=center, fill=white, inner sep=1.5pt},
+  agent/.pic={
+    \draw[red!60!black, fill=red!15] (0,0.55) circle (0.13);
+    \draw[red!60!black, thick] (0,0.42) -- (0,0.05) (-0.22,0.3) -- (0.22,0.3)
+      (0,0.05) -- (-0.17,-0.25) (0,0.05) -- (0.17,-0.25);
+  },
+]
+% Inputs
+\node[ellipse, authors, align=center, minimum width=2.6cm, minimum height=1.1cm] (rq) at (1.2,5.7) {Research\\Question};
+\node[ellipse, neutral, align=center, minimum width=2.6cm, minimum height=1.1cm] (cons) at (6.6,5.7) {Constraints\\(time, compute)};
+
+% Dataset Discovery Harness
+\draw[harness] (0,0) rectangle (5,4);
+\node[htitle] at (3.4,4.4) {Dataset Discovery Harness};
+\pic at (1.2,2.9) {agent};
+\coordinate (dagent) at (1.2,3.6);
+\node[lbl] at (1.2,2.3) {Dataset Discovery\\Agent};
+\node[db, third] at (3.8,2.9) {};
+\node[lbl] at (3.8,1.85) {Reddit Corpus};
+\node[doc, third] at (2.5,0.75) {Reddit\\Documentation};
+
+% Generated dataset
+\node[db, ours] (gen) at (6.6,2.0) {};
+\node[lbl] at (6.6,0.95) {Generated\\Dataset};
+
+% Author Evaluation Harness
+\draw[harness] (8.2,0) rectangle (13,4);
+\node[htitle] at (11.45,4.4) {Author Evaluation Harness};
+\pic at (9.2,2.9) {agent};
+\coordinate (aagent) at (9.2,3.6);
+\node[lbl] at (9.2,2.3) {Submission\\Agent};
+\node[doc, authors] at (11.6,3.2) {Submission\\Guidelines.md};
+\node[code, authors] (acode) at (11.6,1.35) {\textbf{Code}\\\texttt{run.sh}\\\texttt{train.py}\\\texttt{eval.py}\\\dots};
+
+% Open Evaluation Harness
+\draw[harness] (8.2,-5) rectangle (13,-1.1);
+\node[htitle] at (10.6,-0.6) {Open Evaluation Harness};
+\pic at (9.2,-2.3) {agent};
+\node[lbl] at (9.2,-2.9) {Submission\\Agent};
+\node[doc, ours] at (11.6,-1.95) {Submission\\Guidelines.md};
+\node[code, ours] at (11.6,-3.75) {\textbf{Code}\\\texttt{run.sh}\\\texttt{train.py}\\\texttt{eval.py}\\\dots};
+\node[db, authors] (adata) at (6.6,-3.8) {};
+\node[lbl] at (6.6,-4.85) {Authors'\\Dataset};
+
+% Flows
+\draw[->] (rq.south) -- (dagent);
+\draw[->] (5,2.0) -- (gen.west);
+\draw[->] (gen.east) -- (8.2,2.0);
+\draw[->] (6.6,0.55) -- (6.6,-2.0) -- (8.95,-2.0);
+\draw[->] (adata.east) -- (9.2,-3.8) -- (9.2,-3.3);
+
+% Constraints
+\draw[->] (cons.south) |- (5,3.5);
+\draw[->] (cons.east) -| (aagent);
+\node[note, anchor=east] at (9.1,4.95) {Trim / subsample if\\dataset is too large};
+\draw[->] (cons.east) -- (13.8,5.7) |- (acode.east);
+\node[note, anchor=west] at (13.9,3.0) {Kill if it\\exceeds the\\time budget};
+
+% Legend
+\node[ours, minimum width=1.6cm, minimum height=0.5cm, lbl] at (1.2,-2.0) {Ours};
+\node[authors, minimum width=1.6cm, minimum height=0.5cm, lbl] at (1.2,-2.8) {Authors};
+\node[third, minimum width=1.6cm, minimum height=0.5cm, lbl] at (1.2,-3.6) {Third party};
+\end{tikzpicture}%
+}
+\caption{Overview of the benchmark. Given a research question taken from a published paper and resource
+constraints, the \emph{Dataset Discovery Agent} explores a fixed Reddit snapshot and its documentation to construct
+a dataset. The generated dataset is scored by downstream utility: in the \emph{Author Evaluation Harness}, a
+submission agent trains and evaluates on it with the authors' released code and guidelines; in the \emph{Open
+Evaluation Harness}, a submission agent runs our standardized pipeline on both the generated and the authors'
+original dataset under identical conditions.}
+\label{fig:approach}
+\end{figure}
