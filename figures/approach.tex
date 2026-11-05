@@ -1,4 +1,4 @@
-% Overview of the benchmark (redrawn from DatasetDiscovery.drawio).
+% Overview of the benchmark, matching the DatasetDiscovery pipeline.
 % Requires: tikz with libraries arrows.meta, shapes.geometric.
 \begin{figure}[t]
 \centering
@@ -9,81 +9,92 @@
   authors/.style={fill=yellow!30, draw=orange!70!black},
   third/.style={fill=blue!10, draw=blue!60!black},
   neutral/.style={fill=white, draw=black},
-  db/.style={cylinder, shape border rotate=90, aspect=0.25, minimum width=1.4cm, minimum height=1.5cm},
-  doc/.style={rectangle, align=center, minimum width=2.6cm, minimum height=0.9cm},
-  code/.style={rectangle, align=center, minimum width=2.0cm, font=\sffamily\footnotesize},
+  db/.style={cylinder, shape border rotate=90, aspect=0.25, minimum width=1.3cm, minimum height=1.3cm},
+  doc/.style={rectangle, align=center, minimum height=0.75cm, font=\sffamily\footnotesize},
+  code/.style={rectangle, align=center, font=\sffamily\footnotesize},
   harness/.style={draw, thick, rounded corners=4pt},
-  htitle/.style={font=\sffamily\small\bfseries, align=center},
+  htitle/.style={font=\sffamily\small\bfseries},
   lbl/.style={font=\sffamily\footnotesize, align=center},
-  note/.style={font=\sffamily\scriptsize, align=center, fill=white, inner sep=1.5pt},
+  note/.style={font=\sffamily\scriptsize, align=center},
+  budget/.style={->, dashed},
   agent/.pic={
     \draw[red!60!black, fill=red!15] (0,0.55) circle (0.13);
     \draw[red!60!black, thick] (0,0.42) -- (0,0.05) (-0.22,0.3) -- (0.22,0.3)
       (0,0.05) -- (-0.17,-0.25) (0,0.05) -- (0.17,-0.25);
   },
 ]
-% Inputs
-\node[ellipse, authors, align=center, minimum width=2.6cm, minimum height=1.1cm] (rq) at (1.2,5.7) {Research\\Question};
-\node[ellipse, neutral, align=center, minimum width=2.6cm, minimum height=1.1cm] (cons) at (6.6,5.7) {Constraints\\(time, compute)};
+% ---------------- Inputs ----------------
+\node[ellipse, authors, align=center, minimum width=2.4cm, minimum height=1.0cm] (rq) at (0.9,7.7)
+  {Research question\\(from paper)};
+\node[ellipse, neutral, align=center, minimum width=2.4cm, minimum height=1.0cm] (bud) at (6.9,7.7)
+  {Budget\\(time, compute)};
 
-% Dataset Discovery Harness
-\draw[harness] (0,0) rectangle (5,4);
-\node[htitle] at (3.4,4.4) {Dataset Discovery Harness};
-\pic at (1.2,2.9) {agent};
-\coordinate (dagent) at (1.2,3.6);
-\node[lbl] at (1.2,2.3) {Dataset Discovery\\Agent};
-\node[db, third] at (3.8,2.9) {};
-\node[lbl] at (3.8,1.85) {Reddit Corpus};
-\node[doc, third] at (2.5,0.75) {Reddit\\Documentation};
+% ---------------- Dataset Discovery Harness ----------------
+\draw[harness] (0,0) rectangle (6,6.5);
+\node[htitle, anchor=north east] at (5.9,6.42) {Dataset Discovery Harness};
+\node[note, font=\sffamily\scriptsize\itshape, anchor=north east] at (5.9,5.98) {disposable workspace per run};
+\pic at (0.9,4.4) {agent};
+\node[lbl, anchor=north] (dlbl) at (0.9,4.05) {Discovery\\Agent (LLM)};
+\node[code, ours, minimum width=2.6cm, minimum height=1.6cm] (tools) at (4.3,4.15)
+  {\textbf{Tools}\\\texttt{query\_tables}\\\texttt{collect\_*}\\\texttt{save\_dataset}\\\scriptsize\textit{or} plain shell};
+\node[doc, ours, minimum width=2.1cm] (cat) at (1.2,1.25) {\texttt{catalog.md}\\schemas, recipes};
+\node[db, third] (corpus) at (4.3,1.85) {};
+\node[lbl, anchor=north] at (4.3,1.15) {Corpus snapshot\\(Reddit / GitHub)};
+\draw[<->] (1.3,4.6) -- (tools.west |- 1.3,4.6);
+\draw[<->] (tools.south) -- (4.3,2.45) node[midway, right, note] {SQL};
+\draw[->] (dlbl.south) -- (dlbl.south |- cat.north) node[midway, left, note] {reads};
 
-% Generated dataset
-\node[db, ours] (gen) at (6.6,2.0) {};
-\node[lbl] at (6.6,0.95) {Generated\\Dataset};
+% ---------------- Datasets ----------------
+\node[db, ours] (gen) at (7.5,4.85) {};
+\node[lbl, anchor=north] at (7.5,4.15) {Generated\\dataset\\\scriptsize(+ labels,\\\scriptsize methodology)};
+\node[db, authors] (adata) at (7.5,1.6) {};
+\node[lbl, anchor=north] at (7.5,0.9) {Authors'\\dataset};
+\draw[->] (6,4.85) -- (gen.west);
 
-% Author Evaluation Harness
-\draw[harness] (8.2,0) rectangle (13,4);
-\node[htitle] at (11.45,4.4) {Author Evaluation Harness};
-\pic at (9.2,2.9) {agent};
-\coordinate (aagent) at (9.2,3.6);
-\node[lbl] at (9.2,2.3) {Submission\\Agent};
-\node[doc, authors] at (11.6,3.2) {Submission\\Guidelines.md};
-\node[code, authors] (acode) at (11.6,1.35) {\textbf{Code}\\\texttt{run.sh}\\\texttt{train.py}\\\texttt{eval.py}\\\dots};
+% Both datasets feed both evaluation harnesses
+\coordinate (bt) at (8.6,4.85);
+\coordinate (bb) at (8.6,1.55);
+\draw (gen.east) -- (bt) -- (bb) -- (adata.east -| bb);
+\draw (adata.east) -- (adata.east -| bb);
+\fill (bt) circle (1.6pt) (adata.east -| bb) circle (1.6pt);
+\draw[->] (bt) -- (9,4.85);
+\draw[->] (adata.east -| bb) -- (9,1.55 |- adata.east);
 
-% Open Evaluation Harness
-\draw[harness] (8.2,-5) rectangle (13,-1.1);
-\node[htitle] at (10.6,-0.6) {Open Evaluation Harness};
-\pic at (9.2,-2.3) {agent};
-\node[lbl] at (9.2,-2.9) {Submission\\Agent};
-\node[doc, ours] at (11.6,-1.95) {Submission\\Guidelines.md};
-\node[code, ours] at (11.6,-3.75) {\textbf{Code}\\\texttt{run.sh}\\\texttt{train.py}\\\texttt{eval.py}\\\dots};
-\node[db, authors] (adata) at (6.6,-3.8) {};
-\node[lbl] at (6.6,-4.85) {Authors'\\Dataset};
+% ---------------- Budgets ----------------
+\draw[budget] (bud.west) -| (4.6,6.5) node[pos=0.75, left, note] {time limit};
+\draw[budget] (bud.east) -| (bt) node[pos=0.75, left, note] {fixed training\\budget (subsample)};
+\draw[->] (rq.south) -- (0.9,5.1);
 
-% Flows
-\draw[->] (rq.south) -- (dagent);
-\draw[->] (5,2.0) -- (gen.west);
-\draw[->] (gen.east) -- (8.2,2.0);
-\draw[->] (6.6,0.55) -- (6.6,-2.0) -- (8.95,-2.0);
-\draw[->] (adata.east) -- (9.2,-3.8) -- (9.2,-3.3);
+% ---------------- Evaluation harnesses ----------------
+\foreach \T/\name/\sty in {6.5/Author Evaluation Harness/authors, 3.1/Open Evaluation Harness/ours} {
+  \draw[harness] (9,\T-3.1) rectangle (16.3,\T);
+  \node[htitle, anchor=north west] at (9.1,\T-0.08) {\name};
+  \pic at (9.75,\T-1.85) {agent};
+  \node[lbl, anchor=north] at (9.75,\T-2.2) {Submission\\Agent};
+  \node[doc, \sty, minimum width=2.2cm] (g) at (11.45,\T-1.05) {Submission\\\texttt{Guidelines.md}};
+  \node[code, \sty, minimum width=1.9cm, minimum height=1.7cm] (c) at (13.9,\T-1.85)
+    {\textbf{Code}\\\texttt{prepare.py}\\\texttt{train.py}\\\texttt{evaluate.py}};
+  \node[ellipse, neutral, align=center, inner sep=0.5pt, font=\sffamily\scriptsize] (s) at (15.6,\T-1.85)
+    {Score\\ours vs.\\authors'};
+  \draw[->] (g.west) -- (10.05,\T-1.3);
+  \draw[->] (10.05,\T-2.05) -- (c.west |- 10,\T-2.05) node[midway, below, note] {formatted data};
+  \draw[->] (c.east) -- (s.west);
+}
 
-% Constraints
-\draw[->] (cons.south) |- (5,3.5);
-\draw[->] (cons.east) -| (aagent);
-\node[note, anchor=east] at (9.1,4.95) {Trim / subsample if\\dataset is too large};
-\draw[->] (cons.east) -- (13.8,5.7) |- (acode.east);
-\node[note, anchor=west] at (13.9,3.0) {Kill if it\\exceeds the\\time budget};
-
-% Legend
-\node[ours, minimum width=1.6cm, minimum height=0.5cm, lbl] at (1.2,-2.0) {Ours};
-\node[authors, minimum width=1.6cm, minimum height=0.5cm, lbl] at (1.2,-2.8) {Authors};
-\node[third, minimum width=1.6cm, minimum height=0.5cm, lbl] at (1.2,-3.6) {Third party};
+% ---------------- Legend ----------------
+\node[ours, minimum width=1.3cm, minimum height=0.45cm, lbl] at (0.7,-0.7) {Ours};
+\node[authors, minimum width=1.3cm, minimum height=0.45cm, lbl] at (2.25,-0.7) {Authors};
+\node[third, minimum width=1.3cm, minimum height=0.45cm, lbl] at (3.95,-0.7) {Third party};
+\draw[->] (5.05,-0.55) -- (5.6,-0.55) node[right, note] {data};
+\draw[budget] (5.05,-0.85) -- (5.6,-0.85) node[right, note] {budget};
 \end{tikzpicture}%
 }
-\caption{Overview of the benchmark. Given a research question taken from a published paper and resource
-constraints, the \emph{Dataset Discovery Agent} explores a fixed Reddit snapshot and its documentation to construct
-a dataset. The generated dataset is scored by downstream utility: in the \emph{Author Evaluation Harness}, a
-submission agent trains and evaluates on it with the authors' released code and guidelines; in the \emph{Open
-Evaluation Harness}, a submission agent runs our standardized pipeline on both the generated and the authors'
-original dataset under identical conditions.}
+\caption{Overview of the benchmark. Given a research question taken from a published paper and a budget, the
+\emph{Dataset Discovery Agent} works in a disposable workspace: guided by our data catalog, it explores a read-only
+corpus snapshot (Reddit or GitHub) with SQL through our tools (or a plain shell) and saves a labelled dataset with
+its methodology before the time limit. The generated and the authors' datasets are scored by downstream utility under
+the same fixed training budget: a submission agent formats each dataset to the guidelines, then the authors' released
+code (\emph{Author Evaluation Harness}) or our standardized pipeline (\emph{Open Evaluation Harness}) trains and
+evaluates on it.}
 \label{fig:approach}
 \end{figure}
