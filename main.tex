@@ -52,10 +52,10 @@ Subpop -> Audience (Demographic) x Surveys -> economic, social
 (+1.82 F1 on average) and improves MASIVE affect identification by 20\%. Both affect runs are still thread-centric:
 11.36k threads / 171.7k comments convert to only 15.17k train + 801 val MASIVE examples (4.41k unique affect
 targets), and EmoEvent performance concentrates on \emph{happy}/\emph{sad}, suggesting many collected replies are
-neutral advice; we are moving to affect-centric collection. On AlignX, AutoData trails the original (62.75\% vs.\
-65.02\% pooled; +2.82 on P-SOUPS concise/detail, $-$7.22 on PRISM). The gap persists with 5K unique examples each
-(62.52\% vs.\ 67.81\%), ruling out duplication from reversed pairs; the most likely cause is persona richness
-(median 34 vs.\ 55 words), and we are retraining on LLM-enriched personas. On GitHub, our Decompile-Bench v2 data
+neutral advice; we are moving to affect-centric collection. On personalized alignment (AlignX), AutoData is now 11\% better than the original.
+Initially it trailed (62.75\% vs.\ 65.02\% pooled), and the gap persisted with 5K unique examples each, ruling out
+duplication from reversed preference pairs; the cause was persona richness (median 34 vs.\ 55 words), and enriching
+AutoData's personas with an LLM, keeping responses and labels fixed, reversed it. On GitHub, our Decompile-Bench v2 data
 beats DCBench-1.3B on HumanEval re-executability (22.56 vs.\ 20.66) and on HumanEval/MBPP edit similarity, winning at
 O1--O3 but not O0 (Table~\ref{tab:decompile}); it trails on GitHub2025 after decontamination removed much of our
 training data. For RepairLLaMA our baseline does not yet match the paper's model and a larger run is in progress.
